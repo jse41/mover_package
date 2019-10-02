@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   std_srvs
+  osrf_gear
 )
 
 ## System dependencies are found with CMake's conventions
