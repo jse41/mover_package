@@ -6,9 +6,12 @@
 #include "std_srvs/Trigger.h"
 #include "osrf_gear/Order.h"
 #include "osrf_gear/GetMaterialLocations.h"
+#include "osrf_gear/LogicalCameraImage.h"
+#include "osrf_gear/Model.h"
 
-
+// Global Variables 
 std::vector<osrf_gear::Order> order_vector; 
+osrf_gear::LogicalCameraImage logcams;
 
 /**
  * This tutorial demonstrates simple receipt of messages over the ROS system.
@@ -17,6 +20,17 @@ void orderCallback(const osrf_gear::Order& msg)
 {
   ROS_DEBUG("I heard: [%s]", msg.order_id.c_str());
   order_vector.push_back(msg);
+}
+
+void cameraCallback(const osrf_gear::LogicalCameraImage& msg)
+{
+  for(int camobs = 0; camobs < msg.models.size(); camobs++)
+  {
+    ROS_INFO("I heard a: [%s]", msg.models[camobs].type.c_str());
+  }
+  ROS_INFO("JEJEJEJ");
+  
+  logcams = msg;
 }
 
 int main(int argc, char **argv)
@@ -48,6 +62,8 @@ int main(int argc, char **argv)
 
   ros::Subscriber sub = n.subscribe("/ariac/orders", 1000, orderCallback);
 
+  ros::Subscriber camera = n.subscribe("/ariac/logical_camera", 1000, cameraCallback);
+
   // Start Competition
   begin_client.call(begin_comp);
 
@@ -66,20 +82,44 @@ int main(int argc, char **argv)
     {
       osrf_gear::Order curOrd;
       curOrd = order_vector.at(0);
-      ROS_INFO("I heard: [%s]", curOrd.kits[0].objects[0].type.c_str());
-      //ros::ServiceClient matLoc = n.serviceClient
-      
-      ros::ServiceClient client = n.serviceClient<osrf_gear::GetMaterialLocations>("/ariac/material_locations");
-      osrf_gear::GetMaterialLocations srv;
-      srv.request.material_type = curOrd.kits[0].objects[0].type;
 
-      if (client.call(srv))
+      // Go through all kits
+      for(int index = 0; index < curOrd.kits.size(); index++)
       {
-        ROS_INFO("Sum: %s", srv.response.storage_units[0].unit_id.c_str());
+        // Go through all objects 
+        for(int obs = 0; obs < curOrd.kits[index].objects.size(); obs++)
+        {
+          ROS_DEBUG("I heard: [%s]", curOrd.kits[index].objects[obs].type.c_str());
+      
+          // Set up request for finding storage loc
+          ros::ServiceClient client = n.serviceClient<osrf_gear::GetMaterialLocations>("/ariac/material_locations");
+          osrf_gear::GetMaterialLocations srv;
+          srv.request.material_type = curOrd.kits[index].objects[obs].type;
+
+          // Request Storage Loc
+          if (client.call(srv))
+          {
+            ROS_INFO("Object Found: %s", curOrd.kits[index].objects[obs].type.c_str());
+            ROS_INFO("Location of Object: %s", srv.response.storage_units[0].unit_id.c_str());
+
+            int itemIndex; 
+            for(int camobs = 0; camobs < logcams.models.size(); camobs++)
+            {
+              ROS_INFO(logcams.models[camobs].type.c_str());
+              ROS_INFO(curOrd.kits[index].objects[obs].type.c_str());
+              if(logcams.models[camobs].type.c_str() == curOrd.kits[index].objects[obs].type.c_str())
+              {
+                itemIndex = camobs;
+                ROS_INFO("FOUND MATCHING ITEM");
+                break;
+              }
+            }
+          }
+
+        }
       }
-
-
-      // matLoc.call();
+      
+      // Remove item from vector 
       order_vector.erase(order_vector.begin(), order_vector.begin() + 1);
     }
     /**
