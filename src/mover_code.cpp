@@ -12,6 +12,7 @@
 // MoveIt header files
 #include "moveit/move_group_interface/move_group_interface.h"
 #include "moveit/planning_scene_interface/planning_scene_interface.h"
+
 // Transformation header files
 #include "tf2_ros/transform_listener.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
@@ -79,6 +80,20 @@ int main(int argc, char **argv)
 
   tf2_ros::Buffer tfBuffer;
   tf2_ros::TransformListener tfListener(tfBuffer); 
+  moveit::planning_interface::MoveGroupInterface move_group("manipulator");
+//  moveit::planning_interface::MoveGroupInterface move_group("manipulator");
+  
+  // Retrieve the transformation
+//  geometry_msgs::TransformStamped tfStamped;
+//  try{
+//    tfStamped = tfBuffer.lookupTransform(move_group.getPlanningFrame().c_str(),"logical_camera_frame", ros::Time(0.0), ros::Duration(1.0));
+//    ROS_DEBUG("Transform to [%s] from [%s]", tfStamped.header.frame_id.c_str(),tfStamped.child_frame_id.c_str());
+//  }
+//  catch(tf2::TransformException &ex)
+//  {
+ //   ROS_ERROR("A %s", ex.what());
+ // }
+  // tf2_ross::Buffer.lookupTransform("to_frame", "from_frame", "how_recent","how_long_to_wait");
 
   ros::Rate loop_rate(10);
 
