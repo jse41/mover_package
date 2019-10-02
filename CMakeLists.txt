@@ -8,7 +8,7 @@ project(mover)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  geometery_msgs
+  geometry_msgs
   roscpp
   std_msgs
   std_srvs
@@ -134,7 +134,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(mover_node src/mover_node.cpp)
+add_executable(mover_node src/mover_code.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
