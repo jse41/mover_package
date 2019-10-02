@@ -92,7 +92,7 @@ int main(int argc, char **argv)
   {
     ROS_ERROR("A %s", ex.what());
   }
-  // tf2_ross::Buffer.lookupTransform("to_frame", "from_frame", "how_recent","how_long_to_wait");
+  tfBuffer.lookupTransform("logical_camera_frame", "world", ros::Time(0.0));
 
   ros::Rate loop_rate(10);
 
