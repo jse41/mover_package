@@ -81,18 +81,17 @@ int main(int argc, char **argv)
   tf2_ros::Buffer tfBuffer;
   tf2_ros::TransformListener tfListener(tfBuffer); 
   moveit::planning_interface::MoveGroupInterface move_group("manipulator");
-//  moveit::planning_interface::MoveGroupInterface move_group("manipulator");
   
   // Retrieve the transformation
-//  geometry_msgs::TransformStamped tfStamped;
-//  try{
-//    tfStamped = tfBuffer.lookupTransform(move_group.getPlanningFrame().c_str(),"logical_camera_frame", ros::Time(0.0), ros::Duration(1.0));
-//    ROS_DEBUG("Transform to [%s] from [%s]", tfStamped.header.frame_id.c_str(),tfStamped.child_frame_id.c_str());
-//  }
-//  catch(tf2::TransformException &ex)
-//  {
- //   ROS_ERROR("A %s", ex.what());
- // }
+  geometry_msgs::TransformStamped tfStamped;
+  try{
+    tfStamped = tfBuffer.lookupTransform(move_group.getPlanningFrame().c_str(),"logical_camera_frame", ros::Time(0.0), ros::Duration(1.0));
+    ROS_DEBUG("Transform to [%s] from [%s]", tfStamped.header.frame_id.c_str(),tfStamped.child_frame_id.c_str());
+  }
+  catch(tf2::TransformException &ex)
+  {
+    ROS_ERROR("A %s", ex.what());
+  }
   // tf2_ross::Buffer.lookupTransform("to_frame", "from_frame", "how_recent","how_long_to_wait");
 
   ros::Rate loop_rate(10);
@@ -148,7 +147,30 @@ int main(int argc, char **argv)
             }
             ROS_INFO_STREAM("Pose: " << logcams.models[itemIndex].pose);
 
+            geometry_msgs::TransformStamped transformStamped;
 
+            geometry_msgs::PoseStamped part_pose, goal_pose;
+            part_pose.pose = logcams.models[itemIndex].pose;
+            tf2::doTransform(part_pose, goal_pose, transformStamped);
+
+            // Add height to the goal pose.
+            goal_pose.pose.position.z += 0.10; 
+            // 10 cm above the part
+            // Tell the end effector to rotate 90 degrees around the y-axis (in quaternions...more on quaternions later in the semester).
+            goal_pose.pose.orientation.w = 0.707;
+            goal_pose.pose.orientation.x = 0.0;
+            goal_pose.pose.orientation.y = 0.707;
+            goal_pose.pose.orientation.z = 0.0;
+
+            //Set the desired pose for the arm in the arm controller.
+            move_group.setPoseTarget(goal_pose);
+
+            moveit::planning_interface::MoveGroupInterface::Plan the_plan;
+            // Create a plan based on the settings (all default settings now) in the_plan.
+            move_group.plan(the_plan);
+            // Planning does not always succeed.  Check the output.
+            // In the event that the plan was created, execute it.
+            move_group.execute(the_plan);
           }
 
         }
