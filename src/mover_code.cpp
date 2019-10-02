@@ -14,7 +14,9 @@ std::vector<osrf_gear::Order> order_vector;
  */
 void orderCallback(const osrf_gear::Order& msg)
 {
-  ROS_INFO("I heard: [%s]", msg.order_id.c_str());
+  ROS_DEBUG("I heard: [%s]", msg.order_id.c_str());
+  order_vector.push_back(msg);
+  order_vector.push_back(msg);
 }
 
 int main(int argc, char **argv)
@@ -60,6 +62,15 @@ int main(int argc, char **argv)
   int count = 0;
   while (ros::ok())
   {
+    ROS_INFO("Length: %lu", order_vector.size());
+
+    if(!order_vector.empty())
+    {
+      osrf_gear::Order curOrd;
+      curOrd = order_vector.at(0);
+      ROS_INFO("I heard: [%s]", curOrd.order_id.c_str());
+      order_vector.erase(order_vector.begin(), order_vector.begin() + 1);
+    }
     /**
      * This is a message object. You stuff it with data, and then publish it.
      */
@@ -69,7 +80,7 @@ int main(int argc, char **argv)
     ss << "hello world " << count;
     msg.data = ss.str();
 
-    ROS_INFO("%s", msg.data.c_str());
+    
 
     /**
      * The publish() function is how you send messages. The parameter
