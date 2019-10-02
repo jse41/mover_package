@@ -9,6 +9,14 @@
 #include "osrf_gear/LogicalCameraImage.h"
 #include "osrf_gear/Model.h"
 
+// MoveIt header files
+#include "moveit/move_group_interface/move_group_interface.h"
+#include "moveit/planning_scene_interface/planning_scene_interface.h"
+// Transformation header files
+#include "tf2_ros/transform_listener.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include "geometry_msgs/TransformStamped.h"
+
 // Global Variables 
 std::vector<osrf_gear::Order> order_vector; 
 osrf_gear::LogicalCameraImage logcams;
@@ -24,13 +32,13 @@ void orderCallback(const osrf_gear::Order& msg)
 
 void cameraCallback(const osrf_gear::LogicalCameraImage& msg)
 {
+  // !!! USES INCORRECT CAMERA SOMETIMES
   for(int camobs = 0; camobs < msg.models.size(); camobs++)
   {
-    ROS_INFO("I heard a: [%s]", msg.models[camobs].type.c_str());
+    ROS_DEBUG("I heard a: [%s]", msg.models[camobs].type.c_str());
   }
-  ROS_INFO("JEJEJEJ");
-  
-  logcams = msg;
+  if(msg.models.size() > 4)
+    logcams = msg;
 }
 
 int main(int argc, char **argv)
@@ -69,6 +77,9 @@ int main(int argc, char **argv)
 
   ROS_INFO("Competition service returned: %s", begin_comp.response.message.c_str());
 
+  tf2_ros::Buffer tfBuffer;
+  tf2_ros::TransformListener tfListener(tfBuffer); 
+
   ros::Rate loop_rate(10);
 
   /**
@@ -78,6 +89,10 @@ int main(int argc, char **argv)
   int count = 0;
   while (ros::ok())
   {
+    ros::spinOnce();
+
+    loop_rate.sleep();
+
     if(!order_vector.empty())
     {
       osrf_gear::Order curOrd;
@@ -105,15 +120,20 @@ int main(int argc, char **argv)
             int itemIndex; 
             for(int camobs = 0; camobs < logcams.models.size(); camobs++)
             {
-              ROS_INFO(logcams.models[camobs].type.c_str());
-              ROS_INFO(curOrd.kits[index].objects[obs].type.c_str());
-              if(logcams.models[camobs].type.c_str() == curOrd.kits[index].objects[obs].type.c_str())
+              ROS_INFO("%s", logcams.models[camobs].type.c_str());
+   //           ROS_INFO(curOrd.kits[index].objects[obs].type.c_str());
+
+              //!!! BROKEN COMPARISON!!!
+              if(!strcmp(logcams.models[camobs].type.c_str(), curOrd.kits[index].objects[obs].type.c_str()))
               {
                 itemIndex = camobs;
                 ROS_INFO("FOUND MATCHING ITEM");
                 break;
               }
             }
+            ROS_INFO_STREAM("Pose: " << logcams.models[itemIndex].pose);
+
+
           }
 
         }
@@ -141,9 +161,6 @@ int main(int argc, char **argv)
      */
     chatter_pub.publish(msg);
 
-    ros::spinOnce();
-
-    loop_rate.sleep();
     ++count;
   }
 
