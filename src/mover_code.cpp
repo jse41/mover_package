@@ -151,6 +151,12 @@ int main(int argc, char **argv)
             part_pose.pose = logcams.models[itemIndex].pose;
             tf2::doTransform(part_pose, goal_pose, transformStamped);
 
+            ROS_INFO_STREAM("Goal Pose from Transfrom: " << goal_pose.pose);
+
+            goal_pose.pose.position.x = 0;
+            goal_pose.pose.position.y = 0;
+            goal_pose.pose.position.z = 0;
+
             // Add height to the goal pose.
             goal_pose.pose.position.z += 0.10; 
             // 10 cm above the part
@@ -167,15 +173,20 @@ int main(int argc, char **argv)
             
             // Create a plan based on the settings (all default settings now) in the_plan.
             bool success = (move_group.plan(the_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
-            if(!success){
+            while(!success){
               ROS_INFO("Plan Failed... Trying Again");
               success = (move_group.plan(the_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
             }
             ROS_INFO("Planning Successful!");
 
             // In the event that the plan was created, execute it.
-            move_group.execute(the_plan);
-            ROS_INFO("Movement Successful!");            
+//            success = (move_group.execute(the_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+//            while(!success){
+//              ROS_INFO("Movement Failed... Trying Again");
+//              success = (move_group.execute(the_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+//            }
+            ROS_INFO_STREAM("Movement Output: " << move_group.execute(the_plan));
+//            ROS_INFO("Movement Successful!");                       
           }
         }
       }
