@@ -101,10 +101,11 @@ int main(int argc, char **argv)
   bool isWaiting = true;
   while (ros::ok() && isWaiting)
   {
+    // Give some time for background processing to occur 
     ros::spinOnce();
-
     loop_rate.sleep();
 
+    // If there is an order, process it 
     if(!order_vector.empty())
     {
       osrf_gear::Order curOrd;
@@ -113,7 +114,7 @@ int main(int argc, char **argv)
       // Go through all kits
       for(int index = 0; index < curOrd.kits.size(); index++)
       {
-        // Go through all objects 
+        // Go through all objects in the kit
         for(int obs = 0; obs < curOrd.kits[index].objects.size(); obs++)
         {
           ROS_DEBUG("I heard: [%s]", curOrd.kits[index].objects[obs].type.c_str());
@@ -132,6 +133,7 @@ int main(int argc, char **argv)
             int itemIndex; 
             for(int camobs = 0; camobs < logcams.models.size(); camobs++)
             {
+              // Find object in camera field associated with order
               if(!strcmp(logcams.models[camobs].type.c_str(), curOrd.kits[index].objects[obs].type.c_str()))
               {
                 itemIndex = camobs;
@@ -141,7 +143,7 @@ int main(int argc, char **argv)
             }
             ROS_INFO_STREAM("Pose from Camera: " << logcams.models[itemIndex].pose);
 
-
+            // Do Transformation from the camera to the world for the arm
             geometry_msgs::PoseStamped part_pose, goal_pose;
             part_pose.pose = logcams.models[itemIndex].pose;
             tf2::doTransform(part_pose, goal_pose, tfStamped);
@@ -159,7 +161,6 @@ int main(int argc, char **argv)
 
             //Set the desired pose for the arm in the arm controller.
             move_group.setPoseTarget(goal_pose);
-            
             moveit::planning_interface::MoveGroupInterface::Plan the_plan;
             
             // Create a plan based on the settings (all default settings now) in the_plan.
