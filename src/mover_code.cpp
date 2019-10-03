@@ -18,16 +18,15 @@
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "geometry_msgs/TransformStamped.h"
 
+
+
 // Global Variables 
 std::vector<osrf_gear::Order> order_vector; 
 osrf_gear::LogicalCameraImage logcams;
 
-/**
- * This tutorial demonstrates simple receipt of messages over the ROS system.
- */
 void orderCallback(const osrf_gear::Order& msg)
 {
-  ROS_DEBUG("I heard: [%s]", msg.order_id.c_str());
+  ROS_DEBUG("I heard the order: [%s]", msg.order_id.c_str());
   order_vector.push_back(msg);
 }
 
@@ -36,7 +35,7 @@ void cameraCallback(const osrf_gear::LogicalCameraImage& msg)
   // !!! USES INCORRECT CAMERA SOMETIMES
   for(int camobs = 0; camobs < msg.models.size(); camobs++)
   {
-    ROS_DEBUG("I heard a: [%s]", msg.models[camobs].type.c_str());
+    ROS_DEBUG("I heard the camera: [%s]", msg.models[camobs].type.c_str());
   }
   if(msg.models.size() > 4)
     logcams = msg;
@@ -70,6 +69,10 @@ int main(int argc, char **argv)
   ros::Subscriber sub = n.subscribe("/ariac/orders", 1000, orderCallback);
 
   ros::Subscriber camera = n.subscribe("/ariac/logical_camera", 1000, cameraCallback);
+
+  ros::AsyncSpinner a = ros::AsyncSpinner(2); 
+
+  a.start(); 
 
   // Start Competition
   begin_client.call(begin_comp);
@@ -134,7 +137,7 @@ int main(int argc, char **argv)
             for(int camobs = 0; camobs < logcams.models.size(); camobs++)
             {
               ROS_INFO("%s", logcams.models[camobs].type.c_str());
-   //           ROS_INFO(curOrd.kits[index].objects[obs].type.c_str());
+              ROS_INFO(curOrd.kits[index].objects[obs].type.c_str());
 
               //!!! BROKEN COMPARISON!!!
               if(!strcmp(logcams.models[camobs].type.c_str(), curOrd.kits[index].objects[obs].type.c_str()))
