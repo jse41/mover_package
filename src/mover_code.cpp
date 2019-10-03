@@ -145,17 +145,16 @@ int main(int argc, char **argv)
             }
             ROS_INFO_STREAM("Pose from Camera: " << logcams.models[itemIndex].pose);
 
-            geometry_msgs::TransformStamped transformStamped;
 
             geometry_msgs::PoseStamped part_pose, goal_pose;
             part_pose.pose = logcams.models[itemIndex].pose;
-            tf2::doTransform(part_pose, goal_pose, transformStamped);
+            tf2::doTransform(part_pose, goal_pose, tfStamped);
 
             ROS_INFO_STREAM("Goal Pose from Transfrom: " << goal_pose.pose);
 
-            goal_pose.pose.position.x = 0;
-            goal_pose.pose.position.y = 0;
-            goal_pose.pose.position.z = 0;
+//            goal_pose.pose.position.x = 0;
+//            goal_pose.pose.position.y = 0;
+//            goal_pose.pose.position.z = 0;
 
             // Add height to the goal pose.
             goal_pose.pose.position.z += 0.10; 
