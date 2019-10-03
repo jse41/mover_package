@@ -96,14 +96,10 @@ int main(int argc, char **argv)
   }
 //  tfBuffer.lookupTransform("logical_camera_frame", "world", ros::Time(0.0));
 
-  ros::Rate loop_rate(1);
+  ros::Rate loop_rate(0.5);
 
-  /**
-   * A count of how many messages we have sent. This is used to create
-   * a unique string for each message.
-   */
-  int count = 0;
-  while (ros::ok())
+  bool isWaiting = true;
+  while (ros::ok() && isWaiting)
   {
     ros::spinOnce();
 
@@ -152,10 +148,6 @@ int main(int argc, char **argv)
 
             ROS_INFO_STREAM("Goal Pose from Transfrom: " << goal_pose.pose);
 
-//            goal_pose.pose.position.x = 0;
-//            goal_pose.pose.position.y = 0;
-//            goal_pose.pose.position.z = 0;
-
             // Add height to the goal pose.
             goal_pose.pose.position.z += 0.10; 
             // 10 cm above the part
@@ -174,18 +166,20 @@ int main(int argc, char **argv)
             bool success = (move_group.plan(the_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
             while(!success){
               ROS_INFO("Plan Failed... Trying Again");
+              goal_pose.pose.position.z += 0.01;
+              move_group.setPoseTarget(goal_pose);
               success = (move_group.plan(the_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
             }
             ROS_INFO("Planning Successful!");
 
             // In the event that the plan was created, execute it.
-//            success = (move_group.execute(the_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
-//            while(!success){
-//              ROS_INFO("Movement Failed... Trying Again");
-//              success = (move_group.execute(the_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
-//            }
+            success = (move_group.execute(the_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+            while(!success){
+              ROS_INFO("Movement Failed... Trying Again");
+              success = (move_group.execute(the_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+            }
             ROS_INFO_STREAM("Movement Output: " << move_group.execute(the_plan));
-//            ROS_INFO("Movement Successful!");                       
+            isWaiting = false; 
           }
         }
       }
@@ -193,6 +187,7 @@ int main(int argc, char **argv)
       order_vector.erase(order_vector.begin(), order_vector.begin() + 1);
     }
   }
-
+  if(!isWaiting)
+    ROS_INFO("Program Complete");
   return 0;
 }
