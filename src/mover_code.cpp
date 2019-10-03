@@ -70,8 +70,8 @@ int main(int argc, char **argv)
 
   ros::Subscriber camera = n.subscribe("/ariac/logical_camera", 1000, cameraCallback);
 
+  // Asychronus Spinner to resolve planning issues 
   ros::AsyncSpinner a = ros::AsyncSpinner(2); 
-
   a.start(); 
 
   // Start Competition
@@ -96,7 +96,7 @@ int main(int argc, char **argv)
   }
 //  tfBuffer.lookupTransform("logical_camera_frame", "world", ros::Time(0.0));
 
-  ros::Rate loop_rate(10);
+  ros::Rate loop_rate(1);
 
   /**
    * A count of how many messages we have sent. This is used to create
@@ -130,24 +130,20 @@ int main(int argc, char **argv)
           // Request Storage Loc
           if (client.call(srv))
           {
-            ROS_INFO("Object Found: %s", curOrd.kits[index].objects[obs].type.c_str());
+            ROS_INFO("Object Requested: %s", curOrd.kits[index].objects[obs].type.c_str());
             ROS_INFO("Location of Object: %s", srv.response.storage_units[0].unit_id.c_str());
 
             int itemIndex; 
             for(int camobs = 0; camobs < logcams.models.size(); camobs++)
             {
-              ROS_INFO("%s", logcams.models[camobs].type.c_str());
-              ROS_INFO(curOrd.kits[index].objects[obs].type.c_str());
-
-              //!!! BROKEN COMPARISON!!!
               if(!strcmp(logcams.models[camobs].type.c_str(), curOrd.kits[index].objects[obs].type.c_str()))
               {
                 itemIndex = camobs;
-                ROS_INFO("FOUND MATCHING ITEM");
+                ROS_INFO("Found Matching Item In Tray");
                 break;
               }
             }
-            ROS_INFO_STREAM("Pose: " << logcams.models[itemIndex].pose);
+            ROS_INFO_STREAM("Pose from Camera: " << logcams.models[itemIndex].pose);
 
             geometry_msgs::TransformStamped transformStamped;
 
@@ -159,9 +155,9 @@ int main(int argc, char **argv)
             goal_pose.pose.position.z += 0.10; 
             // 10 cm above the part
             // Tell the end effector to rotate 90 degrees around the y-axis (in quaternions...more on quaternions later in the semester).
-            goal_pose.pose.orientation.w = 0.707;
+            goal_pose.pose.orientation.w = 0.7071;
             goal_pose.pose.orientation.x = 0.0;
-            goal_pose.pose.orientation.y = 0.707;
+            goal_pose.pose.orientation.y = 0.7071;
             goal_pose.pose.orientation.z = 0.0;
 
             //Set the desired pose for the arm in the arm controller.
@@ -171,7 +167,6 @@ int main(int argc, char **argv)
             
             // Create a plan based on the settings (all default settings now) in the_plan.
             bool success = (move_group.plan(the_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
-            ROS_INFO("THERE");
             if(!success){
               ROS_INFO("Plan Failed... Trying Again");
               success = (move_group.plan(the_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
@@ -180,11 +175,10 @@ int main(int argc, char **argv)
 
             // In the event that the plan was created, execute it.
             move_group.execute(the_plan);
+            ROS_INFO("Movement Successful!");            
           }
-
         }
       }
-      
       // Remove item from vector 
       order_vector.erase(order_vector.begin(), order_vector.begin() + 1);
     }
