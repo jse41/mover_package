@@ -67,8 +67,6 @@ int main(int argc, char **argv)
 
   ros::ServiceClient begin_client = n.serviceClient<std_srvs::Trigger>("/ariac/start_competition"); 
 
-  ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter", 1000);
-
   ros::Subscriber sub = n.subscribe("/ariac/orders", 1000, orderCallback);
 
   ros::Subscriber camera = n.subscribe("/ariac/logical_camera", 1000, cameraCallback);
@@ -165,12 +163,18 @@ int main(int argc, char **argv)
 
             //Set the desired pose for the arm in the arm controller.
             move_group.setPoseTarget(goal_pose);
-            ROS_INFO("THERE");
-
+            
             moveit::planning_interface::MoveGroupInterface::Plan the_plan;
+            
             // Create a plan based on the settings (all default settings now) in the_plan.
-            ROS_INFO_STREAM("Planning output: " << move_group.plan(the_plan));
-            // Planning does not always succeed.  Check the output.
+            bool success = (move_group.plan(the_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+            ROS_INFO("THERE");
+            if(!success){
+              ROS_INFO("Plan Failed... Trying Again");
+              success = (move_group.plan(the_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+            }
+            ROS_INFO("Planning Successful!");
+
             // In the event that the plan was created, execute it.
             move_group.execute(the_plan);
           }
@@ -181,26 +185,6 @@ int main(int argc, char **argv)
       // Remove item from vector 
       order_vector.erase(order_vector.begin(), order_vector.begin() + 1);
     }
-    /**
-     * This is a message object. You stuff it with data, and then publish it.
-     */
-    std_msgs::String msg;
-
-    std::stringstream ss;
-    ss << "hello world " << count;
-    msg.data = ss.str();
-
-    
-
-    /**
-     * The publish() function is how you send messages. The parameter
-     * is the message object. The type of this object must agree with the type
-     * given as a template parameter to the advertise<>() call, as was done
-     * in the constructor above.
-     */
-    chatter_pub.publish(msg);
-
-    ++count;
   }
 
   return 0;
