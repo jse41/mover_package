@@ -1,0 +1,3 @@
+<launch>
+<node name="mover" pkg="mover" type="mover_node" output="screen"/>
+</launch>
